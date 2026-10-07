@@ -1,0 +1,17 @@
+[1m============================= test session starts =============================[0m
+platform win32 -- Python 3.14.7, pytest-8.3.2, pluggy-1.5.0
+rootdir: C:\Users\kirut\projects\ecommerce-api
+collected 3 items / 2 failures
+
+[1m[31m================================== FAILURES ===================================[0m
+[1m[31m________________________ test_database_connection _________________________[0m
+
+    def test_database_connection():
+>       raise ConnectionError("Could not connect to postgres")
+[1m[31mE       ConnectionError: Could not connect to postgres[0m
+
+[1m[31mtests/test_db.py[0m:10: ConnectionError
+[1m[31m=========================== short test summary info ===========================[0m
+[31mFAILED[0m tests/test_db.py::[1mtest_database_connection[0m - ConnectionError: Could not connect to postgres
+[31mFAILED[0m tests/test_redis.py::[1mtest_cache_ping[0m - ConnectionRefusedError: [Errno 111] Connection refused
+[1m[31m======================== [31m2 failed[0m, [32m1 passed[0m[1m in 0.42s =========================[0m

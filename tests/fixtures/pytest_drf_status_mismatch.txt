@@ -1,0 +1,56 @@
+============================= test session starts =============================
+platform win32 -- Python 3.14.7, pytest-8.3.2, pluggy-1.5.0
+rootdir: C:\Users\kirut\projects\ecommerce-api
+collected 10 items / 4 failures
+
+================================== FAILURES ===================================
+________________________ test_order_post_endpoint _________________________
+
+client = <rest_framework.test.APIClient object at 0x000001>
+
+    def test_order_post_endpoint(client):
+        response = client.post('/api/v1/orders/', {'total': 100})
+>       assert response.status_code == 201, f"expected 201, got {response.status_code}"
+E       AssertionError: expected 201, got 500
+E       assert 500 == 201
+
+orders/tests/test_views.py:52: AssertionError
+________________________ test_order_item_add ______________________________
+
+client = <rest_framework.test.APIClient object at 0x000002>
+
+    def test_order_item_add(client):
+        response = client.post('/api/v1/orders/1/items/', {'sku': 'SKU1'})
+>       assert response.status_code == 201, f"expected 201, got {response.status_code}"
+E       AssertionError: expected 201, got 500
+E       assert 500 == 201
+
+orders/tests/test_views.py:68: AssertionError
+________________________ test_secret_admin_dashboard ______________________
+
+client = <rest_framework.test.APIClient object at 0x000003>
+
+    def test_secret_admin_dashboard(client):
+        response = client.get('/api/v1/admin/dashboard/')
+>       assert response.status_code == 200, f"expected 200, got {response.status_code}"
+E       AssertionError: expected 200, got 401
+E       assert 401 == 200
+
+users/tests/test_views.py:88: AssertionError
+________________________ test_user_permissions_endpoint ___________________
+
+client = <rest_framework.test.APIClient object at 0x000004>
+
+    def test_user_permissions_endpoint(client):
+        response = client.get('/api/v1/users/permissions/')
+>       assert response.status_code == 200, f"expected 200, got {response.status_code}"
+E       AssertionError: expected 200, got 403
+E       assert 403 == 200
+
+users/tests/test_views.py:102: AssertionError
+=========================== short test summary info ===========================
+FAILED orders/tests/test_views.py::test_order_post_endpoint - AssertionError: expected 201, got 500
+FAILED orders/tests/test_views.py::test_order_item_add - AssertionError: expected 201, got 500
+FAILED users/tests/test_views.py::test_secret_admin_dashboard - AssertionError: expected 200, got 401
+FAILED users/tests/test_views.py::test_user_permissions_endpoint - AssertionError: expected 200, got 403
+======================== 4 failed, 6 passed in 1.12s ==========================

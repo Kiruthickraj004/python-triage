@@ -1,0 +1,27 @@
+============================= test session starts =============================
+platform win32 -- Python 3.14.7, pytest-8.3.2, pluggy-1.5.0
+rootdir: C:\Users\kirut\projects\ecommerce-api
+collected 20 items / 5 failures
+
+================================== FAILURES ===================================
+________________________ test_stripe_card_charge _________________________
+
+    def test_stripe_card_charge():
+>       import stripe
+E       ModuleNotFoundError: No module named 'stripe'
+
+payments/tests/test_stripe.py:3: ModuleNotFoundError
+________________________ test_stripe_webhook_verify ______________________
+
+    def test_stripe_webhook_verify():
+>       import stripe
+E       ModuleNotFoundError: No module named 'stripe'
+
+payments/tests/test_stripe.py:15: ModuleNotFoundError
+=========================== short test summary info ===========================
+FAILED payments/tests/test_stripe.py::test_stripe_card_charge - ModuleNotFoundError: No module named 'stripe'
+FAILED payments/tests/test_stripe.py::test_stripe_webhook_verify - ModuleNotFoundError: No module named 'stripe'
+FAILED payments/tests/test_stripe.py::test_stripe_refund - ModuleNotFoundError: No module named 'stripe'
+FAILED payments/tests/test_subscriptions.py::test_create_subscription - ModuleNotFoundError: No module named 'stripe'
+FAILED payments/tests/test_subscriptions.py::test_cancel_subscription - ModuleNotFoundError: No module named 'stripe'
+======================== 5 failed, 15 passed in 0.89s =========================

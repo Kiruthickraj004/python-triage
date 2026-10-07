@@ -1,0 +1,58 @@
+============================= test session starts =============================
+platform win32 -- Python 3.14.7, pytest-8.3.2, pluggy-1.5.0
+django: settings: myproject.settings (from ini)
+rootdir: C:\Users\kirut\projects\ecommerce-api
+plugins: django-4.8.0
+collected 45 items / 15 failures
+
+================================== FAILURES ===================================
+________________________ test_order_creation_flow ________________________
+
+client = <rest_framework.test.APIClient object at 0x000001>
+
+    def test_order_creation_flow(client):
+>       response = client.post('/api/orders/', {'product_id': 1, 'qty': 2})
+E       django.db.utils.OperationalError: could not connect to server: Connection refused
+E       	Is the server running on host "localhost" (127.0.0.1) and accepting
+E       	TCP/IP connections on port 5432?
+
+orders/tests/test_orders.py:28: OperationalError
+________________________ test_cancel_order_endpoint ________________________
+
+client = <rest_framework.test.APIClient object at 0x000002>
+
+    def test_cancel_order_endpoint(client):
+>       response = client.post('/api/orders/99/cancel/')
+E       django.db.utils.OperationalError: could not connect to server: Connection refused
+E       	Is the server running on host "localhost" (127.0.0.1) and accepting
+E       	TCP/IP connections on port 5432?
+
+orders/tests/test_orders.py:45: OperationalError
+________________________ test_user_login_db_check ________________________
+
+client = <rest_framework.test.APIClient object at 0x000003>
+
+    def test_user_login_db_check(client):
+>       response = client.post('/api/auth/token/', {'username': 'alice', 'password': 'secret'})
+E       django.db.utils.OperationalError: could not connect to server: Connection refused
+E       	Is the server running on host "localhost" (127.0.0.1) and accepting
+E       	TCP/IP connections on port 5432?
+
+users/tests/test_auth.py:19: OperationalError
+=========================== short test summary info ===========================
+FAILED orders/tests/test_orders.py::test_order_creation_flow - django.db.utils.OperationalError: could not connect to server: Connection refused
+FAILED orders/tests/test_orders.py::test_cancel_order_endpoint - django.db.utils.OperationalError: could not connect to server: Connection refused
+FAILED orders/tests/test_orders.py::test_order_invoice - django.db.utils.OperationalError: could not connect to server: Connection refused
+FAILED orders/tests/test_orders.py::test_order_tracking - django.db.utils.OperationalError: could not connect to server: Connection refused
+FAILED users/tests/test_auth.py::test_user_login_db_check - django.db.utils.OperationalError: could not connect to server: Connection refused
+FAILED users/tests/test_auth.py::test_user_register - django.db.utils.OperationalError: could not connect to server: Connection refused
+FAILED users/tests/test_auth.py::test_password_reset - django.db.utils.OperationalError: could not connect to server: Connection refused
+FAILED users/tests/test_profile.py::test_get_profile - django.db.utils.OperationalError: could not connect to server: Connection refused
+FAILED users/tests/test_profile.py::test_update_avatar - django.db.utils.OperationalError: could not connect to server: Connection refused
+FAILED products/tests/test_catalog.py::test_list_products - django.db.utils.OperationalError: could not connect to server: Connection refused
+FAILED products/tests/test_catalog.py::test_filter_by_category - django.db.utils.OperationalError: could not connect to server: Connection refused
+FAILED products/tests/test_catalog.py::test_stock_count - django.db.utils.OperationalError: could not connect to server: Connection refused
+FAILED cart/tests/test_cart.py::test_add_to_cart - django.db.utils.OperationalError: could not connect to server: Connection refused
+FAILED cart/tests/test_cart.py::test_remove_from_cart - django.db.utils.OperationalError: could not connect to server: Connection refused
+FAILED cart/tests/test_cart.py::test_checkout_cart - django.db.utils.OperationalError: could not connect to server: Connection refused
+======================== 15 failed, 30 passed in 2.14s =========================

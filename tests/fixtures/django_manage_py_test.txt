@@ -1,0 +1,34 @@
+Creating test database for alias 'default'...
+System check identified no issues (0 silenced).
+..F.E.F
+======================================================================
+FAIL: test_create_order (orders.tests.test_views.OrderAPITestCase.test_create_order)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:/projects/ecommerce-api/orders/tests/test_views.py", line 42, in test_create_order
+    self.assertEqual(response.status_code, 201)
+AssertionError: 500 != 201
+
+======================================================================
+ERROR: test_db_connection (users.tests.test_auth.AuthTestCase.test_db_connection)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:/projects/ecommerce-api/users/tests/test_auth.py", line 25, in test_db_connection
+    User.objects.create(username="test")
+  File "C:/projects/ecommerce-api/env/lib/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+django.db.utils.OperationalError: could not connect to server: Connection refused
+
+======================================================================
+FAIL: test_admin_access (users.tests.test_perms.PermTestCase.test_admin_access)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:/projects/ecommerce-api/users/tests/test_perms.py", line 55, in test_admin_access
+    self.assertEqual(response.status_code, 200)
+AssertionError: 403 != 200
+
+----------------------------------------------------------------------
+Ran 7 tests in 1.234s
+
+FAILED (failures=2, errors=1)
+Destroying test database for alias 'default'...

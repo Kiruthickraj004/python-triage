@@ -1,0 +1,69 @@
+============================= test session starts =============================
+platform win32 -- Python 3.14.7, pytest-8.3.2, pluggy-1.5.0
+rootdir: C:\Users\kirut\projects\ecommerce-api
+plugins: django-4.8.0
+collected 80 items / 35 failures
+
+================================== FAILURES ===================================
+________________________ test_order_db_create ________________________
+    def test_order_db_create():
+>       Order.objects.create(total=50)
+E       django.db.utils.OperationalError: could not connect to server: Connection refused
+E       	Is the server running on host "localhost" (127.0.0.1) and accepting
+E       	TCP/IP connections on port 5432?
+orders/tests/test_db.py:12: OperationalError
+________________________ test_stripe_token_create ________________________
+    def test_stripe_token_create():
+>       import stripe
+E       ModuleNotFoundError: No module named 'stripe'
+payments/tests/test_stripe.py:5: ModuleNotFoundError
+________________________ test_api_checkout_500 ________________________
+    def test_api_checkout_500(client):
+        response = client.post('/api/checkout/')
+>       assert response.status_code == 200, f"expected 200, got {response.status_code}"
+E       AssertionError: expected 200, got 500
+orders/tests/test_api.py:33: AssertionError
+________________________ test_admin_forbidden ________________________
+    def test_admin_forbidden(client):
+        response = client.get('/api/admin/metrics/')
+>       assert response.status_code == 200
+E       AssertionError: assert 403 == 200
+users/tests/test_perms.py:22: AssertionError
+
+=========================== short test summary info ===========================
+FAILED orders/tests/test_orders.py::test_create_order - django.db.utils.OperationalError: could not connect to server: Connection refused
+FAILED orders/tests/test_orders.py::test_cancel_order - django.db.utils.OperationalError: could not connect to server: Connection refused
+FAILED orders/tests/test_orders.py::test_update_order - django.db.utils.OperationalError: could not connect to server: Connection refused
+FAILED orders/tests/test_orders.py::test_archive_order - django.db.utils.OperationalError: could not connect to server: Connection refused
+FAILED orders/tests/test_items.py::test_add_item - django.db.utils.OperationalError: could not connect to server: Connection refused
+FAILED orders/tests/test_items.py::test_remove_item - django.db.utils.OperationalError: could not connect to server: Connection refused
+FAILED users/tests/test_auth.py::test_login - django.db.utils.OperationalError: could not connect to server: Connection refused
+FAILED users/tests/test_auth.py::test_logout - django.db.utils.OperationalError: could not connect to server: Connection refused
+FAILED users/tests/test_auth.py::test_refresh_token - django.db.utils.OperationalError: could not connect to server: Connection refused
+FAILED users/tests/test_users.py::test_get_user - django.db.utils.OperationalError: could not connect to server: Connection refused
+FAILED users/tests/test_users.py::test_update_user - django.db.utils.OperationalError: could not connect to server: Connection refused
+FAILED users/tests/test_users.py::test_delete_user - django.db.utils.OperationalError: could not connect to server: Connection refused
+FAILED products/tests/test_items.py::test_list_items - django.db.utils.OperationalError: could not connect to server: Connection refused
+FAILED products/tests/test_items.py::test_get_item - django.db.utils.OperationalError: could not connect to server: Connection refused
+FAILED products/tests/test_categories.py::test_list_cats - django.db.utils.OperationalError: could not connect to server: Connection refused
+FAILED products/tests/test_categories.py::test_create_cat - django.db.utils.OperationalError: could not connect to server: Connection refused
+FAILED billing/tests/test_invoices.py::test_create_invoice - django.db.utils.OperationalError: could not connect to server: Connection refused
+FAILED billing/tests/test_invoices.py::test_pay_invoice - django.db.utils.OperationalError: could not connect to server: Connection refused
+FAILED payments/tests/test_stripe.py::test_stripe_charge - ModuleNotFoundError: No module named 'stripe'
+FAILED payments/tests/test_stripe.py::test_stripe_refund - ModuleNotFoundError: No module named 'stripe'
+FAILED payments/tests/test_stripe.py::test_stripe_dispute - ModuleNotFoundError: No module named 'stripe'
+FAILED payments/tests/test_plans.py::test_create_plan - ModuleNotFoundError: No module named 'stripe'
+FAILED payments/tests/test_plans.py::test_cancel_plan - ModuleNotFoundError: No module named 'stripe'
+FAILED orders/tests/test_api.py::test_order_api_post - AssertionError: expected 201, got 500
+FAILED orders/tests/test_api.py::test_order_api_put - AssertionError: expected 200, got 500
+FAILED orders/tests/test_api.py::test_order_api_delete - AssertionError: expected 204, got 500
+FAILED products/tests/test_api.py::test_create_product_api - AssertionError: expected 201, got 500
+FAILED products/tests/test_api.py::test_batch_upload - AssertionError: expected 200, got 500
+FAILED billing/tests/test_api.py::test_billing_webhook - AssertionError: expected 200, got 500
+FAILED billing/tests/test_api.py::test_tax_calc - AssertionError: expected 200, got 500
+FAILED users/tests/test_perms.py::test_admin_metrics - AssertionError: assert 403 == 200
+FAILED users/tests/test_perms.py::test_staff_dashboard - AssertionError: assert 403 == 200
+FAILED users/tests/test_perms.py::test_export_csv - AssertionError: assert 403 == 200
+FAILED users/tests/test_auth_api.py::test_protected_view - AssertionError: assert 401 == 200
+FAILED users/tests/test_auth_api.py::test_token_introspection - AssertionError: assert 401 == 200
+======================== 35 failed, 45 passed in 5.67s =========================

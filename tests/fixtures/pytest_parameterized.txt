@@ -1,0 +1,32 @@
+============================= test session starts =============================
+platform win32 -- Python 3.14.7, pytest-8.3.2, pluggy-1.5.0
+rootdir: C:\Users\kirut\projects\ecommerce-api
+collected 6 items / 4 failures
+
+================================== FAILURES ===================================
+________________________ test_tax_calc[standard-NY] ________________________
+
+rate = 0.08, state = 'NY', expected = 108.0
+
+    @pytest.mark.parametrize("rate,state,expected", [(0.08, 'NY', 108.0), (0.075, 'CA', 107.5)])
+    def test_tax_calc(rate, state, expected):
+>       assert calculate_tax(100, state) == expected
+E       AssertionError: assert 108.5 == 108.0
+
+orders/tests/test_tax.py:22: AssertionError
+________________________ test_tax_calc[express-CA] _________________________
+
+rate = 0.075, state = 'CA', expected = 107.5
+
+    @pytest.mark.parametrize("rate,state,expected", [(0.08, 'NY', 108.0), (0.075, 'CA', 107.5)])
+    def test_tax_calc(rate, state, expected):
+>       assert calculate_tax(100, state) == expected
+E       AssertionError: assert 110.0 == 107.5
+
+orders/tests/test_tax.py:22: AssertionError
+=========================== short test summary info ===========================
+FAILED orders/tests/test_tax.py::test_tax_calc[standard-NY] - AssertionError: assert 108.5 == 108.0
+FAILED orders/tests/test_tax.py::test_tax_calc[express-CA] - AssertionError: assert 110.0 == 107.5
+FAILED users/tests/test_auth.py::TestAuth::test_login[invalid_pwd-lockout] - AssertionError: 500 != 400
+FAILED users/tests/test_auth.py::TestAuth::test_login[expired_token] - AssertionError: 500 != 401
+======================== 4 failed, 2 passed in 0.54s ==========================
