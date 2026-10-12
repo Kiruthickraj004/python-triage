@@ -134,3 +134,41 @@ def test_parse_django_manage_py_test():
     assert db_fail.status == "ERROR"
     assert db_fail.error_type == "django.db.utils.OperationalError"
     assert "Connection refused" in db_fail.error_message
+
+
+def test_parse_django_fatal_database_setup_crash():
+    raw_output = """
+Running: python manage.py test carts
+Creating test database for alias 'default'...
+Found 2 test(s).
+Traceback (most recent call last):
+  File "C:\\project\\backend\\manage.py", line 22, in <module>
+    main()
+  File "c:\\project\\.venv\\Lib\\site-packages\\django\\db\\backends\\base\\creation.py", line 75, in create_test_db
+    self._create_test_db(verbosity, autoclobber, keepdb)
+django.db.utils.OperationalError: connection failed: connection to server at "127.0.0.1", port 5432 failed: FATAL:  password authentication failed for user "postgres"
+"""
+    parser = TestOutputParser(raw_output)
+    assert parser.detect_framework() == "django"
+
+    run = parser.parse()
+    assert run.framework == "django"
+    assert len(run.failures) == 1
+    assert run.total_errors == 1
+
+    failure = run.failures[0]
+    assert failure.error_type == "django.db.utils.OperationalError"
+    assert "password authentication failed" in failure.error_message
+    assert failure.test_name == "database_setup"
+    assert failure.file_path == "C:\\project\\backend\\manage.py"
+    assert failure.line_number == 22
+
+
+def test_parse_bare_exception_fatal_crash():
+    raw_output = """
+django.core.exceptions.ImproperlyConfigured: Requested setting INSTALLED_APPS, but settings are not configured.
+"""
+    run = parse_test_output(raw_output)
+    assert len(run.failures) == 1
+    assert run.failures[0].error_type == "django.core.exceptions.ImproperlyConfigured"
+    assert "INSTALLED_APPS" in run.failures[0].error_message

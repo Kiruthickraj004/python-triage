@@ -53,6 +53,10 @@ DJANGO_RAN_RE = re.compile(
     r'^Ran\s+(\d+)\s+tests\s+in\s+([\d\.]+)s',
     re.MULTILINE
 )
+EXCEPTION_LINE_RE = re.compile(
+    r'^\s*([A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*(?:Error|Exception|Failure|Warning|Exit|Interrupt|Fault|Configured)):\s*(.*)$',
+    re.MULTILINE
+)
 
 
 def strip_ansi(text: str) -> str:
@@ -106,22 +110,37 @@ class TestOutputParser:
     def detect_framework(self) -> str:
         """Detect whether the output is from pytest or Django manage.py test."""
         clean = self.clean_text
-        if "=== test session starts ===" in clean or "short test summary info" in clean:
+        if "=== test session starts ===" in clean or "short test summary info" in clean or "collected " in clean:
             return "pytest"
-        if "Ran " in clean and ("FAILED (failures=" in clean or "FAILED (errors=" in clean):
+        if "Ran " in clean and ("FAILED" in clean or "OK" in clean):
             return "django"
         if re.search(r'^(?:FAIL|ERROR):\s*\S+\s*\(', clean, re.MULTILINE):
             return "django"
+        if "Creating test database" in clean or "Destroying test database" in clean or re.search(r'Found \d+ test\(s\)', clean):
+            return "django"
+        if "manage.py" in clean:
+            return "django"
         if re.search(r'^(?:FAILED|ERROR)\s+[^\s\-]+::', clean, re.MULTILINE):
             return "pytest"
+        if "django" in clean.lower():
+            return "django"
         return "pytest"  # Default to pytest
 
     def parse(self) -> ParsedRun:
         """Parse the test output into structured test failures and run metadata."""
         framework = self.detect_framework()
         if framework == "django":
-            return self._parse_django()
-        return self._parse_pytest()
+            run = self._parse_django()
+        else:
+            run = self._parse_pytest()
+
+        if not run.failures and ("Traceback (most recent call last):" in self.clean_text or EXCEPTION_LINE_RE.search(self.clean_text)):
+            tb_failures = self._extract_unhandled_tracebacks(framework=framework)
+            if tb_failures:
+                run.failures = tb_failures
+                run.total_errors = len(tb_failures)
+
+        return run
 
     def _parse_pytest_traceback_blocks(self) -> Dict[str, Tuple[str, Optional[str], Optional[int]]]:
         """
@@ -281,6 +300,12 @@ class TestOutputParser:
                     )
                 )
 
+        if not failures:
+            tb_fails = self._extract_unhandled_tracebacks(framework="pytest")
+            if tb_fails:
+                failures = tb_fails
+                total_errors = len(tb_fails)
+
         if total_failed == 0 and not total_errors:
             total_failed = sum(1 for f in failures if f.status == "FAILED")
             total_errors = sum(1 for f in failures if f.status == "ERROR")
@@ -366,6 +391,11 @@ class TestOutputParser:
 
         total_passed = max(0, total_ran - (total_failed + total_errors)) if total_ran > 0 else None
 
+        if not failures:
+            failures = self._extract_unhandled_tracebacks(framework="django")
+            if failures:
+                total_errors = len(failures)
+
         return ParsedRun(
             failures=failures,
             total_failed=total_failed,
@@ -375,6 +405,85 @@ class TestOutputParser:
             duration_str=duration_str,
             raw_summary_line=summary_match.group(0) if summary_match else "",
         )
+
+    def _extract_unhandled_tracebacks(self, framework: str = "django") -> List[TestFailure]:
+        """
+        Extract unhandled Python exception tracebacks or runner crash blocks
+        when tests fail during setup, database initialization, or collection.
+        """
+        failures: List[TestFailure] = []
+        tb_indices = [m.start() for m in re.finditer(r'Traceback \(most recent call last\):', self.clean_text)]
+        if not tb_indices:
+            # Check for bare fatal exceptions (e.g. ImproperlyConfigured, ModuleNotFoundError without traceback)
+            exc_match = EXCEPTION_LINE_RE.search(self.clean_text)
+            if exc_match:
+                err_type = exc_match.group(1).strip()
+                err_msg = exc_match.group(2).strip()
+                failures.append(
+                    TestFailure(
+                        test_id=f"runner::{err_type}",
+                        file_path="runner",
+                        test_name="runner_execution",
+                        error_type=err_type,
+                        error_message=err_msg,
+                        traceback=self.clean_text.strip(),
+                        status="ERROR",
+                        framework=framework,
+                        line_number=None,
+                    )
+                )
+            return failures
+
+        first_tb = tb_indices[0]
+        tb_block = self.clean_text[first_tb:].strip()
+
+        # Extract file frames: File "...", line X
+        all_frames = re.findall(r'File "([^"]+)", line (\d+)(?:, in (\w+))?', tb_block)
+        # Identify user/project frames (exclude virtualenvs, site-packages, standard lib)
+        user_frames = [
+            f for f in all_frames
+            if "site-packages" not in f[0].lower()
+            and "dist-packages" not in f[0].lower()
+            and "lib\\" not in f[0].lower()
+            and "lib/" not in f[0].lower()
+        ]
+        primary_frame = user_frames[-1] if user_frames else (all_frames[-1] if all_frames else ("runner", 1, ""))
+        file_path = primary_frame[0]
+        line_no = int(primary_frame[1]) if primary_frame[1] else None
+
+        # Find the exception line from the traceback
+        lines = [l.strip() for l in tb_block.splitlines() if l.strip()]
+        err_type = "RunnerError"
+        err_msg = ""
+        for l in reversed(lines):
+            if re.match(r'^[A-Za-z_][A-Za-z0-9_\.]*(?:Error|Exception|Failure|Warning|Exit|Interrupt|Fault)?:\s*', l):
+                err_type, err_msg = parse_error_details(l)
+                break
+
+        test_scope = "runner_setup"
+        if "setup_databases" in tb_block or "create_test_db" in tb_block or "database" in err_msg.lower() or "creating test database" in self.clean_text.lower():
+            test_scope = "database_setup"
+        elif "collecting" in tb_block or "collection" in tb_block:
+            test_scope = "collection"
+        elif "import" in err_msg.lower() or "modulenotfound" in err_type.lower():
+            test_scope = "import_setup"
+
+        test_id = f"{file_path}::{test_scope}"
+
+        failures.append(
+            TestFailure(
+                test_id=test_id,
+                file_path=file_path,
+                test_name=test_scope,
+                error_type=err_type,
+                error_message=err_msg,
+                traceback=tb_block,
+                status="ERROR",
+                framework=framework,
+                line_number=line_no,
+            )
+        )
+        return failures
 
 
 def parse_test_output(raw_output: str) -> ParsedRun:

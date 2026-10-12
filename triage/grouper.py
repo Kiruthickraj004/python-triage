@@ -6,7 +6,7 @@ from triage.models import TestFailure, PreGroup
 
 # Pre-compiled regex patterns for diagnostic classification
 DB_CONNECTION_RE = re.compile(
-    r'(could not connect to server|connection refused|operationalerror|can\'t connect to (?:mysql|postgresql)|connection to localhost.*failed|database.*down)',
+    r'(could not connect to server|connection refused|operationalerror|can\'t connect to (?:mysql|postgresql)|connection to localhost.*failed|database.*down|password authentication failed)',
     re.IGNORECASE
 )
 DB_MIGRATION_RE = re.compile(
@@ -117,11 +117,23 @@ class FailureGrouper:
                     "priority": "HIGH",
                 }
 
+            is_auth_failure = "password authentication failed" in combined_text.lower()
+            pattern = (
+                "Database authentication failed or database container not ready"
+                if is_auth_failure
+                else "Database service unreachable or connection refused on configured port"
+            )
+            suggested_fix = (
+                "Ensure PostgreSQL container is running (e.g. 'docker compose up -d') and check DATABASE_URL / DB credentials"
+                if is_auth_failure
+                else "Ensure PostgreSQL/database is running (e.g. 'docker compose up -d postgres') and check DATABASE_URL"
+            )
+
             return "db_connection_refused", {
                 "category": "Database Connection Refused",
                 "error_type": failure.error_type,
-                "root_cause_pattern": "Database service unreachable or connection refused on configured port",
-                "suggested_fix": "Ensure PostgreSQL/database is running (e.g. 'docker compose up -d postgres') and check DATABASE_URL",
+                "root_cause_pattern": pattern,
+                "suggested_fix": suggested_fix,
                 "confidence": 0.98,
                 "priority": "HIGH",
             }
@@ -130,8 +142,11 @@ class FailureGrouper:
         if (
             "ModuleNotFoundError" in failure.error_type
             or "ImportError" in failure.error_type
+            or "ModuleNotFoundError" in combined_text
+            or "ImportError" in combined_text
+            or MODULE_NOT_FOUND_RE.search(combined_text)
         ):
-            mod_match = MODULE_NOT_FOUND_RE.search(failure.error_message or combined_text)
+            mod_match = MODULE_NOT_FOUND_RE.search(combined_text)
             missing_module = mod_match.group(1) if mod_match else "dependency"
             return f"missing_module_{missing_module}", {
                 "category": f"Missing Dependency ({missing_module})",
